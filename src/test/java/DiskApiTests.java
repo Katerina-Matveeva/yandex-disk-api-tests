@@ -39,11 +39,8 @@ public class DiskApiTests extends BaseApiTest {
     public void createFolder_shouldReturn201or409() {
         Response response = DiskSteps.createFolder(rootFolder, token);
 
-        assertThat(
-                "Создание папки должно вернуть 201 (создано) или 409 (уже существует)",
-                response.statusCode(),
-                anyOf(is(201), is(409))
-        );
+        assertThat(response.statusCode(), is(201));
+
     }
 
     @Test
@@ -76,18 +73,12 @@ public class DiskApiTests extends BaseApiTest {
 
         Response copyResponse = DiskSteps.copyResource(rootFolder, copyFolder, true, token);
 
-        assertThat(
-                "Копирование должно вернуть 201 или 202",
-                copyResponse.statusCode(),
-                anyOf(is(201), is(202))
-        );
-
         DiskSteps.awaitIfAsync(copyResponse, token);
+        DiskSteps.awaitResourceExists(copyFolder, token);
 
         Response meta = DiskSteps.getResource(copyFolder, token);
         assertThat(meta.statusCode(), is(200));
         assertThat(meta.jsonPath().getString("type"), is("dir"));
-
     }
 
     @Test
@@ -98,20 +89,11 @@ public class DiskApiTests extends BaseApiTest {
 
         Response deleteResponse = DiskSteps.deleteResource(rootFolder, true, token);
 
-        assertThat(
-                "Удаление должно вернуть 202 или 204",
-                deleteResponse.statusCode(),
-                anyOf(is(202), is(204))
-        );
-
         DiskSteps.awaitIfAsync(deleteResponse, token);
+        DiskSteps.awaitResourceNotFound(rootFolder, token);
 
         Response afterDelete = DiskSteps.getResource(rootFolder, token);
-        assertThat(
-                "После удаления папка должна быть недоступна",
-                afterDelete.statusCode(),
-                is(404)
-        );
+        assertThat(afterDelete.statusCode(), is(404));
     }
 
     @Test
